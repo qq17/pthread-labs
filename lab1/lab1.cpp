@@ -1,7 +1,89 @@
-#include <stdio.h>
-#include <unistd.h>
+#define _GNU_SOURCE     /* To get pthread_getattr_np() declaration */
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
 #include <string.h>
+
+#define handle_error_en(en, msg) \
+       do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
+static void
+display_pthread_attr(pthread_attr_t *attr, char *prefix)
+{
+    int s, i;
+    size_t v;
+    void *stkaddr;
+    struct sched_param sp;
+
+    s = pthread_attr_getdetachstate(attr, &i);
+    if (s != 0)
+        handle_error_en(s, "pthread_attr_getdetachstate");
+    printf("%sDetach state        = %s\n", prefix,
+            (i == PTHREAD_CREATE_DETACHED) ? "PTHREAD_CREATE_DETACHED" :
+            (i == PTHREAD_CREATE_JOINABLE) ? "PTHREAD_CREATE_JOINABLE" :
+            "???");
+
+    s = pthread_attr_getscope(attr, &i);
+    if (s != 0)
+        handle_error_en(s, "pthread_attr_getscope");
+    printf("%sScope               = %s\n", prefix,
+            (i == PTHREAD_SCOPE_SYSTEM)  ? "PTHREAD_SCOPE_SYSTEM" :
+            (i == PTHREAD_SCOPE_PROCESS) ? "PTHREAD_SCOPE_PROCESS" :
+            "???");
+
+    s = pthread_attr_getinheritsched(attr, &i);
+    if (s != 0)
+        handle_error_en(s, "pthread_attr_getinheritsched");
+    printf("%sInherit scheduler   = %s\n", prefix,
+            (i == PTHREAD_INHERIT_SCHED)  ? "PTHREAD_INHERIT_SCHED" :
+            (i == PTHREAD_EXPLICIT_SCHED) ? "PTHREAD_EXPLICIT_SCHED" :
+            "???");
+
+    s = pthread_attr_getschedpolicy(attr, &i);
+    if (s != 0)
+        handle_error_en(s, "pthread_attr_getschedpolicy");
+    printf("%sScheduling policy   = %s\n", prefix,
+            (i == SCHED_OTHER) ? "SCHED_OTHER" :
+            (i == SCHED_FIFO)  ? "SCHED_FIFO" :
+            (i == SCHED_RR)    ? "SCHED_RR" :
+            "???");
+
+    s = pthread_attr_getschedparam(attr, &sp);
+    if (s != 0)
+        handle_error_en(s, "pthread_attr_getschedparam");
+    printf("%sScheduling priority = %d\n", prefix, sp.sched_priority);
+
+    s = pthread_attr_getguardsize(attr, &v);
+    if (s != 0)
+        handle_error_en(s, "pthread_attr_getguardsize");
+    printf("%sGuard size          = %zu bytes\n", prefix, v);
+
+    s = pthread_attr_getstack(attr, &stkaddr, &v);
+    if (s != 0)
+        handle_error_en(s, "pthread_attr_getstack");
+    printf("%sStack address       = %p\n", prefix, stkaddr);
+    printf("%sStack size          = %#zx bytes\n", prefix, v);
+}
+
+static void *
+thread_start(void *arg)
+{
+    int s;
+    pthread_attr_t gattr;
+
+    /* pthread_getattr_np() is a non-standard GNU extension that
+      retrieves the attributes of the thread specified in its
+      first argument */
+
+    s = pthread_getattr_np(pthread_self(), &gattr);
+    if (s != 0)
+        handle_error_en(s, "pthread_getattr_np");
+
+    printf("Thread attributes:\n");
+    display_pthread_attr(&gattr, "\t");
+}
 
 using namespace std;
 
@@ -12,52 +94,29 @@ struct targs
 
 void * f1(void *arg)
 {
+    thread_start(NULL);
     targs *args = (targs *) arg;
-    int r;
 
     while(args->flag == 0)
     {
-        r = putchar('1');
-        if (r == EOF)
-        {
-            perror("putchar error: ");
-        }
-        r = fflush(stdout);
-        if (r == EOF)
-        {
-            perror("fflush error: ");
-        }
-        r = sleep(1);
-        if (r != 0)
-        {
-            perror("sleep error: ");
-        }
+        putchar('1');
+        fflush(stdout);
+        sleep(1);
     }
     pthread_exit((void *)55);
 }
 
 void * f2(void *arg)
 {
+    thread_start(NULL);
     targs *args = (targs *) arg;
     int r;
 
     while(args->flag == 0)
     {
-        r = putchar('2');
-        if (r == EOF)
-        {
-            perror("putchar error: ");
-        }
-        r = fflush(stdout);
-        if (r == EOF)
-        {
-            perror("fflush error: ");
-        }
-        r = sleep(1);
-        if (r != 0)
-        {
-            perror("sleep error: ");
-        }
+        putchar('2');
+        fflush(stdout);
+        sleep(1);
     }
     pthread_exit((void *)77);
 }
@@ -74,22 +133,24 @@ int main()
     pthread_t t1;
     pthread_t t2;
 
-    r = pthread_create(&t1, NULL, f1, &arg1);
+    pthread_attr_t attr1;
+    pthread_attr_t attr2;
+
+    pthread_attr_init(&attr1);
+    pthread_attr_init(&attr2);
+
+    r = pthread_create(&t1, &attr1, f1, &arg1);
     if (r != 0)
     {
         printf("pthread_create error: %s", strerror(r));
     }
-    r = pthread_create(&t2, NULL, f2, &arg2);
+    r = pthread_create(&t2, &attr2, f2, &arg2);
     if (r != 0)
     {
         printf("pthread_create error: %s", strerror(r));
     }
 
-    r = getchar();
-    if (r == EOF)
-    {
-        perror("getchar error: ");
-    }
+    getchar();
 
     arg1.flag = 1;
     arg2.flag = 1;
@@ -105,16 +166,11 @@ int main()
         printf("pthread_join error: %s", strerror(r));
     }
 
-    r = printf("exitcode from t1 = %d\n", r1);
-    if (r < 0)
-    {
-        perror("printf error: ");
-    }
-    r = printf("exitcode from t2 = %d\n", r2);
-    if (r < 0)
-    {
-        perror("printf error: ");
-    }
+    printf("exitcode from t1 = %d\n", r1);
+    printf("exitcode from t2 = %d\n", r2);
+
+    pthread_attr_destroy(&attr1);
+    pthread_attr_destroy(&attr2);
     
     return 0;
 }
