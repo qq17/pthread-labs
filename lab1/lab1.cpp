@@ -1,4 +1,4 @@
-#define _GNU_SOURCE     /* To get pthread_getattr_np() declaration */
+#define _GNU_SOURCE
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +8,11 @@
 
 #define handle_error_en(en, msg) \
        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+
+struct targs
+{
+    int flag;
+};
 
 static void
 display_pthread_attr(pthread_attr_t *attr, char *prefix)
@@ -67,35 +72,18 @@ display_pthread_attr(pthread_attr_t *attr, char *prefix)
     printf("%sStack size          = %#zx bytes\n", prefix, v);
 }
 
-static void *
-thread_start(void *arg)
+void * f1(void *arg)
 {
-    int s;
+    targs *args = (targs *) arg;
+    int r;
     pthread_attr_t gattr;
 
-    /* pthread_getattr_np() is a non-standard GNU extension that
-      retrieves the attributes of the thread specified in its
-      first argument */
-
-    s = pthread_getattr_np(pthread_self(), &gattr);
-    if (s != 0)
-        handle_error_en(s, "pthread_getattr_np");
+    r = pthread_getattr_np(pthread_self(), &gattr);
+    if (r != 0)
+        handle_error_en(r, "pthread_getattr_np");
 
     printf("Thread attributes:\n");
     display_pthread_attr(&gattr, "\t");
-}
-
-using namespace std;
-
-struct targs
-{
-    int flag;
-};
-
-void * f1(void *arg)
-{
-    thread_start(NULL);
-    targs *args = (targs *) arg;
 
     while(args->flag == 0)
     {
@@ -108,9 +96,16 @@ void * f1(void *arg)
 
 void * f2(void *arg)
 {
-    thread_start(NULL);
     targs *args = (targs *) arg;
     int r;
+    pthread_attr_t gattr;
+
+    r = pthread_getattr_np(pthread_self(), &gattr);
+    if (r != 0)
+        handle_error_en(r, "pthread_getattr_np");
+
+    printf("Thread attributes:\n");
+    display_pthread_attr(&gattr, "\t");
 
     while(args->flag == 0)
     {
@@ -174,3 +169,27 @@ int main()
     
     return 0;
 }
+
+/*
+Thread attributes:
+    Detach state        = PTHREAD_CREATE_JOINABLE
+    Scope               = PTHREAD_SCOPE_SYSTEM
+    Inherit scheduler   = PTHREAD_INHERIT_SCHED
+    Scheduling policy   = SCHED_OTHER
+    Scheduling priority = 0
+    Guard size          = 4096 bytes
+    Stack address       = 0x7fad75980000
+    Stack size          = 0x800000 bytes
+2Thread attributes:
+    Detach state        = PTHREAD_CREATE_JOINABLE
+    Scope               = PTHREAD_SCOPE_SYSTEM
+    Inherit scheduler   = PTHREAD_INHERIT_SCHED
+    Scheduling policy   = SCHED_OTHER
+    Scheduling priority = 0
+    Guard size          = 4096 bytes
+    Stack address       = 0x7fad76181000
+    Stack size          = 0x800000 bytes
+1212121
+exitcode from t1 = 55
+exitcode from t2 = 77
+*/
