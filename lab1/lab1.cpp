@@ -154,18 +154,26 @@ int main()
         handle_error_en(r, "pthread_attr_setschedpolicy error: ");
     }
 
+    //SCHED_FIFO и sched_priority = 0 - несовместимые атрибуты
+    // Processes scheduled under one of the real-time policies
+    // (SCHED_FIFO, SCHED_RR) have a sched_priority value in the range 1
+    // (low) to 99 (high). (https://man7.org/linux/man-pages/man7/sched.7.html)
+    //Поэтому в функции pthread_create возникает ошибка
+
     printf("attr1:\n");
     display_pthread_attr(&attr1);
 
     r = pthread_create(&t1, &attr1, f1, &arg1);
     if (r != 0)
     {
-        printf("t1 pthread_create error: %s\n", strerror(r));
+        printf("t1 pthread_create error: %s", strerror(r));
+        printf("\n");
     }
     r = pthread_create(&t2, &attr2, f2, &arg2);
     if (r != 0)
     {
-        printf("t2 pthread_create error: %s\n", strerror(r));
+        printf("t2 pthread_create error: %s", strerror(r));
+        printf("\n");
     }
 
     getchar();
@@ -176,12 +184,14 @@ int main()
     r = pthread_join(t1, (void **)&r1);
     if (r != 0)
     {
-        printf("pthread_join error: %s\n", strerror(r));
+        printf("pthread_join error: %s", strerror(r));
+        printf("\n");
     }
     r = pthread_join(t2, (void **)&r2);
     if (r != 0)
     {
-        printf("pthread_join error: %s\n", strerror(r));
+        printf("pthread_join error: %s", strerror(r));
+        printf("\n");
     }
 
     printf("exitcode from t1 = %d\n", r1);
