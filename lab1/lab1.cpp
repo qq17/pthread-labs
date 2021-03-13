@@ -7,15 +7,14 @@
 #include <string.h>
 
 #define handle_error_en(en, msg) \
-       do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+       do { errno = en; perror(msg); } while (0)
 
 struct targs
 {
     int flag;
 };
 
-static void
-display_pthread_attr(pthread_attr_t *attr, char *prefix)
+void display_pthread_attr(pthread_attr_t *attr)
 {
     int s, i;
     size_t v;
@@ -24,52 +23,61 @@ display_pthread_attr(pthread_attr_t *attr, char *prefix)
 
     s = pthread_attr_getdetachstate(attr, &i);
     if (s != 0)
-        handle_error_en(s, "pthread_attr_getdetachstate");
-    printf("%sDetach state        = %s\n", prefix,
-            (i == PTHREAD_CREATE_DETACHED) ? "PTHREAD_CREATE_DETACHED" :
-            (i == PTHREAD_CREATE_JOINABLE) ? "PTHREAD_CREATE_JOINABLE" :
-            "???");
+        handle_error_en(s, "pthread_attr_getdetachstate error: ");
+    else
+        printf("\tDetach state        = %s\n",
+                (i == PTHREAD_CREATE_DETACHED) ? "PTHREAD_CREATE_DETACHED" :
+                (i == PTHREAD_CREATE_JOINABLE) ? "PTHREAD_CREATE_JOINABLE" :
+                "???");
 
     s = pthread_attr_getscope(attr, &i);
     if (s != 0)
-        handle_error_en(s, "pthread_attr_getscope");
-    printf("%sScope               = %s\n", prefix,
-            (i == PTHREAD_SCOPE_SYSTEM)  ? "PTHREAD_SCOPE_SYSTEM" :
-            (i == PTHREAD_SCOPE_PROCESS) ? "PTHREAD_SCOPE_PROCESS" :
-            "???");
+        handle_error_en(s, "pthread_attr_getscope error: ");
+    else
+        printf("\tScope               = %s\n",
+                (i == PTHREAD_SCOPE_SYSTEM)  ? "PTHREAD_SCOPE_SYSTEM" :
+                (i == PTHREAD_SCOPE_PROCESS) ? "PTHREAD_SCOPE_PROCESS" :
+                "???");
 
     s = pthread_attr_getinheritsched(attr, &i);
     if (s != 0)
-        handle_error_en(s, "pthread_attr_getinheritsched");
-    printf("%sInherit scheduler   = %s\n", prefix,
-            (i == PTHREAD_INHERIT_SCHED)  ? "PTHREAD_INHERIT_SCHED" :
-            (i == PTHREAD_EXPLICIT_SCHED) ? "PTHREAD_EXPLICIT_SCHED" :
-            "???");
+        handle_error_en(s, "pthread_attr_getinheritsched error: ");
+    else
+        printf("\tInherit scheduler   = %s\n",
+                (i == PTHREAD_INHERIT_SCHED)  ? "PTHREAD_INHERIT_SCHED" :
+                (i == PTHREAD_EXPLICIT_SCHED) ? "PTHREAD_EXPLICIT_SCHED" :
+                "???");
 
     s = pthread_attr_getschedpolicy(attr, &i);
     if (s != 0)
-        handle_error_en(s, "pthread_attr_getschedpolicy");
-    printf("%sScheduling policy   = %s\n", prefix,
-            (i == SCHED_OTHER) ? "SCHED_OTHER" :
-            (i == SCHED_FIFO)  ? "SCHED_FIFO" :
-            (i == SCHED_RR)    ? "SCHED_RR" :
-            "???");
+        handle_error_en(s, "pthread_attr_getschedpolicy error: ");
+    else
+        printf("\tScheduling policy   = %s\n",
+                (i == SCHED_OTHER) ? "SCHED_OTHER" :
+                (i == SCHED_FIFO)  ? "SCHED_FIFO" :
+                (i == SCHED_RR)    ? "SCHED_RR" :
+                "???");
 
     s = pthread_attr_getschedparam(attr, &sp);
     if (s != 0)
-        handle_error_en(s, "pthread_attr_getschedparam");
-    printf("%sScheduling priority = %d\n", prefix, sp.sched_priority);
+        handle_error_en(s, "pthread_attr_getschedparam error: ");
+    else
+        printf("\tScheduling priority = %d\n", sp.sched_priority);
 
     s = pthread_attr_getguardsize(attr, &v);
     if (s != 0)
-        handle_error_en(s, "pthread_attr_getguardsize");
-    printf("%sGuard size          = %zu bytes\n", prefix, v);
+        handle_error_en(s, "pthread_attr_getguardsize error: ");
+    else
+        printf("\tGuard size          = %zu bytes\n", v);
 
     s = pthread_attr_getstack(attr, &stkaddr, &v);
     if (s != 0)
-        handle_error_en(s, "pthread_attr_getstack");
-    printf("%sStack address       = %p\n", prefix, stkaddr);
-    printf("%sStack size          = %#zx bytes\n", prefix, v);
+        handle_error_en(s, "pthread_attr_getstack error: ");
+    else
+    {
+        printf("\tStack address       = %p\n", stkaddr);
+        printf("\tStack size          = %#zx bytes\n", v);
+    }
 }
 
 void * f1(void *arg)
@@ -80,10 +88,10 @@ void * f1(void *arg)
 
     r = pthread_getattr_np(pthread_self(), &gattr);
     if (r != 0)
-        handle_error_en(r, "pthread_getattr_np");
+        handle_error_en(r, "t1 pthread_getattr_np error: ");
 
     printf("Thread t1 attributes:\n");
-    display_pthread_attr(&gattr, "\t");
+    display_pthread_attr(&gattr);
 
     while(args->flag == 0)
     {
@@ -102,10 +110,10 @@ void * f2(void *arg)
 
     r = pthread_getattr_np(pthread_self(), &gattr);
     if (r != 0)
-        handle_error_en(r, "pthread_getattr_np");
+        handle_error_en(r, "t2 pthread_getattr_np error: ");
 
     printf("Thread t2 attributes:\n");
-    display_pthread_attr(&gattr, "\t");
+    display_pthread_attr(&gattr);
 
     while(args->flag == 0)
     {
@@ -134,15 +142,30 @@ int main()
     pthread_attr_init(&attr1);
     pthread_attr_init(&attr2);
 
+    r = pthread_attr_setinheritsched(&attr1, PTHREAD_EXPLICIT_SCHED);
+    if (r != 0)
+    {
+        handle_error_en(r, "pthread_attr_setinheritsched error: ");
+    }
+
+    r = pthread_attr_setschedpolicy(&attr1, SCHED_FIFO);
+    if (r != 0)
+    {
+        handle_error_en(r, "pthread_attr_setschedpolicy error: ");
+    }
+
+    printf("attr1:\n");
+    display_pthread_attr(&attr1);
+
     r = pthread_create(&t1, &attr1, f1, &arg1);
     if (r != 0)
     {
-        printf("pthread_create error: %s", strerror(r));
+        printf("t1 pthread_create error: %s\n", strerror(r));
     }
     r = pthread_create(&t2, &attr2, f2, &arg2);
     if (r != 0)
     {
-        printf("pthread_create error: %s", strerror(r));
+        printf("t2 pthread_create error: %s\n", strerror(r));
     }
 
     getchar();
@@ -153,12 +176,12 @@ int main()
     r = pthread_join(t1, (void **)&r1);
     if (r != 0)
     {
-        printf("pthread_join error: %s", strerror(r));
+        printf("pthread_join error: %s\n", strerror(r));
     }
     r = pthread_join(t2, (void **)&r2);
     if (r != 0)
     {
-        printf("pthread_join error: %s", strerror(r));
+        printf("pthread_join error: %s\n", strerror(r));
     }
 
     printf("exitcode from t1 = %d\n", r1);
