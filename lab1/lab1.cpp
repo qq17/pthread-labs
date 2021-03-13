@@ -82,7 +82,7 @@ void * f1(void *arg)
     if (r != 0)
         handle_error_en(r, "pthread_getattr_np");
 
-    printf("Thread attributes:\n");
+    printf("Thread t1 attributes:\n");
     display_pthread_attr(&gattr, "\t");
 
     while(args->flag == 0)
@@ -104,7 +104,7 @@ void * f2(void *arg)
     if (r != 0)
         handle_error_en(r, "pthread_getattr_np");
 
-    printf("Thread attributes:\n");
+    printf("Thread t2 attributes:\n");
     display_pthread_attr(&gattr, "\t");
 
     while(args->flag == 0)
@@ -169,27 +169,3 @@ int main()
     
     return 0;
 }
-
-/*
-Thread attributes:
-    Detach state        = PTHREAD_CREATE_JOINABLE
-    Scope               = PTHREAD_SCOPE_SYSTEM
-    Inherit scheduler   = PTHREAD_INHERIT_SCHED
-    Scheduling policy   = SCHED_OTHER
-    Scheduling priority = 0
-    Guard size          = 4096 bytes
-    Stack address       = 0x7fad75980000
-    Stack size          = 0x800000 bytes
-2Thread attributes:
-    Detach state        = PTHREAD_CREATE_JOINABLE
-    Scope               = PTHREAD_SCOPE_SYSTEM
-    Inherit scheduler   = PTHREAD_INHERIT_SCHED
-    Scheduling policy   = SCHED_OTHER
-    Scheduling priority = 0
-    Guard size          = 4096 bytes
-    Stack address       = 0x7fad76181000
-    Stack size          = 0x800000 bytes
-1212121
-exitcode from t1 = 55
-exitcode from t2 = 77
-*/
