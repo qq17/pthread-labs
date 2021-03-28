@@ -21,8 +21,8 @@ void * f1(void *arg)
         while (r != 0)
         {
             printf("\nf1 pthread_mutex_trylock error: %s\n", strerror(r));
-            r = pthread_mutex_trylock(&m);
             sleep(1);
+            r = pthread_mutex_trylock(&m);
         }
 
         for (int i = 0; i < 5; i++)
@@ -52,8 +52,8 @@ void * f2(void *arg)
         while (r != 0)
         {
             printf("\nf2 pthread_mutex_trylock error: %s\n", strerror(r));
-            r = pthread_mutex_trylock(&m);
             sleep(1);
+            r = pthread_mutex_trylock(&m);
         }
 
         for (int i = 0; i < 5; i++)
