@@ -11,42 +11,45 @@ struct targs
 
 int pipefd[2];
 
-void * get_buffer(char **buffer)
-{
-    time_t rawtime = time(0);
-    tm *lt = localtime(&rawtime);
-    strftime(*buffer, sizeof(buffer), "%Y.%m.%d %H:%M:%S", lt);
-    printf("%s\n", *buffer);
-}
-
-void * f1(void *arg)
+void * writer(void *arg)
 {
     targs *args = (targs *) arg;
     int r;
+
+    char buffer[20];
+    time_t rawtime;
+    tm *loctime;
     
     while(args->flag == 0)
     {
-    	
+        rawtime = time(0);
+        loctime = localtime(&rawtime);
+        strftime(buffer, sizeof(buffer), "%Y.%m.%d %H:%M:%S", loctime);
+
+        r = write(pipefd[1], buffer, 20);
+        if (r == -1)
+        {
+            perror("write error: ");
+        }
+
         sleep(1);
     }
 }
 
-void * f2(void *arg)
+void * reader(void *arg)
 {
     targs *args = (targs *) arg;
     int r;
+    char buffer[20];
     
     while(args->flag == 0)
     {
-    	
-
-    	for (int i = 0; i < 5; i++)
+    	r = read(pipefd[0], buffer, 20);
+        if (r == -1)
         {
-            putchar('2');
-        	fflush(stdout);
-        	sleep(1);
+            perror("read error: ");
         }
-        
+        printf("%s\n", buffer);
         
         sleep(1);
     }
@@ -54,63 +57,62 @@ void * f2(void *arg)
 
 int main()
 {
-    char buffer [80];
-    get_buffer(&buffer);
-    printf("%s\n", buffer);
+    targs arg1;
+    targs arg2;
+    arg1.flag = 0;
+    arg2.flag = 0;
 
-    // targs arg1;
-    // targs arg2;
-    // arg1.flag = 0;
-    // arg2.flag = 0;
+    int r;
+    pthread_t t1;
+    pthread_t t2;
 
-    // int r;
-    // pthread_t t1;
-    // pthread_t t2;
+    r = pipe(pipefd);
+    if (r == -1)
+    {
+        perror("pipe error: ");
+    }
 
-    // r = pthread_mutex_init(&m, NULL);
-    // if (r != 0)
-    // {
-    //     printf("pthread_mutex_init error: %s", strerror(r));
-    //     printf("\n");
-    // }
+    r = pthread_create(&t1, NULL, writer, &arg1);
+    if (r != 0)
+    {
+        printf("t1 pthread_create error: %s", strerror(r));
+        printf("\n");
+    }
+    r = pthread_create(&t2, NULL, reader, &arg2);
+    if (r != 0)
+    {
+        printf("t2 pthread_create error: %s", strerror(r));
+        printf("\n");
+    }
 
-    // r = pthread_create(&t1, NULL, f1, &arg1);
-    // if (r != 0)
-    // {
-    //     printf("t1 pthread_create error: %s", strerror(r));
-    //     printf("\n");
-    // }
-    // r = pthread_create(&t2, NULL, f2, &arg2);
-    // if (r != 0)
-    // {
-    //     printf("t2 pthread_create error: %s", strerror(r));
-    //     printf("\n");
-    // }
+    getchar();
 
-    // getchar();
+    arg1.flag = 1;
+    arg2.flag = 1;
 
-    // arg1.flag = 1;
-    // arg2.flag = 1;
+    r = pthread_join(t1, NULL);
+    if (r != 0)
+    {
+        printf("pthread_join error: %s", strerror(r));
+        printf("\n");
+    }
+    r = pthread_join(t2, NULL);
+    if (r != 0)
+    {
+        printf("pthread_join error: %s", strerror(r));
+        printf("\n");
+    }
 
-    // r = pthread_join(t1, NULL);
-    // if (r != 0)
-    // {
-    //     printf("pthread_join error: %s", strerror(r));
-    //     printf("\n");
-    // }
-    // r = pthread_join(t2, NULL);
-    // if (r != 0)
-    // {
-    //     printf("pthread_join error: %s", strerror(r));
-    //     printf("\n");
-    // }
-
-    // r = pthread_mutex_destroy(&m);
-    // if (r != 0)
-    // {
-    //     printf("pthread_mutex_destroy error: %s", strerror(r));
-    //     printf("\n");
-    // }
+    r = close(pipefd[1]);
+    if (r == -1)
+    {
+        perror("pipefd[1] close error: ");
+    }
+    r = close(pipefd[0]);
+    if (r == -1)
+    {
+        perror("pipefd[0] close error: ");
+    }
     
     return 0;
 }

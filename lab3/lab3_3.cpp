@@ -67,10 +67,16 @@ int main()
     pthread_t t1;
     pthread_t t2;
 
-    r = pipe2(pipefd, O_NONBLOCK);
+    r = pipe(pipefd);
     if (r == -1)
     {
-        perror("pipe2 error: ");
+        perror("pipe error: ");
+    }
+
+    r = fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
+    if (r == -1)
+    {
+        perror("pipe error: ");
     }
 
     r = pthread_create(&t1, NULL, writer, &arg1);
