@@ -24,7 +24,7 @@ void * writer(void *arg)
     {
         rawtime = time(0);
         loctime = localtime(&rawtime);
-        strftime(buffer, sizeof(buffer), "%Y.%m.%d %H:%M:%S", loctime);
+        strftime(buffer, 20, "%Y.%m.%d %H:%M:%S", loctime);
 
         r = write(pipefd[1], buffer, 20);
         if (r == -1)
@@ -44,6 +44,8 @@ void * reader(void *arg)
     
     while(args->flag == 0)
     {
+        memset(buffer, '\0', 20);
+
     	r = read(pipefd[0], buffer, 20);
         if (r == -1)
         {
@@ -93,13 +95,13 @@ int main()
     r = pthread_join(t1, NULL);
     if (r != 0)
     {
-        printf("pthread_join error: %s", strerror(r));
+        printf("t1 pthread_join error: %s", strerror(r));
         printf("\n");
     }
     r = pthread_join(t2, NULL);
     if (r != 0)
     {
-        printf("pthread_join error: %s", strerror(r));
+        printf("t2 pthread_join error: %s", strerror(r));
         printf("\n");
     }
 
