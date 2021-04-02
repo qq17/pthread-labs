@@ -25,9 +25,9 @@ void * writer(void *arg)
     {
         rawtime = time(0);
         loctime = localtime(&rawtime);
-        strftime(buffer, BUF_SIZE, "%Y.%m.%d %H:%M:%S", loctime);
+        r = strftime(buffer, BUF_SIZE, "%Y.%m.%d %H:%M:%S", loctime);
 
-        r = write(pipefd[1], buffer, BUF_SIZE);
+        r = write(pipefd[1], buffer, r);
         if (r == -1)
         {
             perror("write error: ");
@@ -57,10 +57,8 @@ void * reader(void *arg)
         else
         {
             printf("%s\n", buffer);
-            fflush(stdout);
         }
     }
-    return NULL;
 }
 
 int main()
