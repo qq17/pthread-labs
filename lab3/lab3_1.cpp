@@ -30,7 +30,7 @@ void * writer(void *arg)
         r = write(pipefd[1], buffer, r);
         if (r == -1)
         {
-            perror("write error: ");
+            perror("write error");
         }
 
         sleep(1);
@@ -50,7 +50,7 @@ void * reader(void *arg)
     	r = read(pipefd[0], buffer, BUF_SIZE);
         if (r == -1)
         {
-            perror("read error: ");
+            perror("read error");
 
             sleep(1);
         }
