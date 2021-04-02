@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctime>
 #include <fcntl.h>
+#define BUF_SIZE 20
 
 struct targs
 {
@@ -17,7 +18,7 @@ void * writer(void *arg)
     targs *args = (targs *) arg;
     int r;
 
-    char buffer[20];
+    char buffer[BUF_SIZE];
     time_t rawtime;
     tm *loctime;
     
@@ -25,9 +26,9 @@ void * writer(void *arg)
     {
         rawtime = time(0);
         loctime = localtime(&rawtime);
-        strftime(buffer, 20, "%Y.%m.%d %H:%M:%S", loctime);
+        strftime(buffer, BUF_SIZE, "%Y.%m.%d %H:%M:%S", loctime);
 
-        r = write(pipefd[1], buffer, 20);
+        r = write(pipefd[1], buffer, BUF_SIZE);
         if (r == -1)
         {
             perror("write error: ");
@@ -41,20 +42,23 @@ void * reader(void *arg)
 {
     targs *args = (targs *) arg;
     int r;
-    char buffer[20];
+    char buffer[BUF_SIZE];
     
     while(args->flag == 0)
     {
-        memset(buffer, '\0', 20);
+        memset(buffer, '\0', BUF_SIZE);
         
-        r = read(pipefd[0], buffer, 20);
+        r = read(pipefd[0], buffer, BUF_SIZE);
         if (r == -1)
         {
             perror("read error: ");
+
+            sleep(1);
         }
-        printf("%s\n", buffer);
-        
-        sleep(1);
+        else
+        {
+            printf("%s\n", buffer);
+        }
     }
 }
 
