@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
     if (argc > 1)
     {
         printf("lab4_1 was called with arguments: \n");
-        for (int i=1; i<argc; i++)
+        for (int i = 1; i < argc; ++i)
         {
             printf("%s\n", argv[i]);
             sleep(1);
@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
         printf("lab4_1 was called with no arguments\n");
     }
 
-    printf("lab4_1 id: %d\n", getpid());
-    printf("lab4_1 parent id: %d\n", getppid());
+    printf("lab4_1 process id: %d\n", getpid());
+    printf("lab4_1 parent process id: %d\n", getppid());
 
-    exit(0);
+    exit(55);
 }
