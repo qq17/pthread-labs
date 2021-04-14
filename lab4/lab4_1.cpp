@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
 
     printf("lab4_1 process id: %d\n", getpid());
     printf("lab4_1 parent process id: %d\n", getppid());
+    printf("lab4_1 environment variable LANGUAGE: %s\n", getenv("LANGUAGE"));
 
     exit(55);
 }

@@ -15,22 +15,28 @@ int main()
 
     printf("lab4_2 process id: %d\n", getpid());
     printf("lab4_2 parent process id: %d\n", getppid());
+    printf("lab4_2 environment variable LANGUAGE: %s\n", getenv("LANGUAGE"));
 
     pid = fork();
 
     if (pid == 0)
     {
         char *path;
+        char *newpath;
         char cwd[PATH_MAX];
 
         path = getenv("PATH");
-        strcat(path, ":");
-        strcat(path, getcwd(cwd, sizeof(cwd)));
-        strcat(path, "/lab4_1:");
-        setenv("PATH", path, 1);
+        newpath = (char *)malloc(sizeof(char) * (strlen(path) + 1));
+        strcpy(newpath, path);
+        strcat(newpath, ":");
+        strcat(newpath, getcwd(cwd, sizeof(cwd)));
+        strcat(newpath, "/lab4_1:");
+        setenv("PATH", newpath, 1);
+
+        char *envp[] = {"LANGUAGE=fr", NULL};
 
         char *argv[] = {"lab4_1", "1", "5", "3", NULL};
-        r = execvpe("lab4_1", argv, NULL);
+        r = execvpe("lab4_1", argv, envp);
         if (r == -1)
         {
             perror("execvpe error\n");
