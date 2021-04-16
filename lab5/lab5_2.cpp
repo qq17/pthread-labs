@@ -92,7 +92,7 @@ int main()
         return 4;
     }
 
-    printf("lab5_2 exitcode from thread_func: %d", exitcode);
+    printf("lab5_2 exitcode from thread_func: %d\n", exitcode);
 
     r = fclose(fd);
     if (r == EOF)
