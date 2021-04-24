@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include <ctime>
 
 #define BUF_SIZE 80
@@ -15,8 +16,14 @@ struct targs
 };
 
 int fifod;
+char fifo_name[] = "/tmp/lab7_fifo";
 pthread_t th_open;
 pthread_t th_func;
+
+void sig_handler(int signo)
+{
+    printf("got SIGPIPE\n");
+}
 
 void * thread_func(void *arg)
 {
@@ -34,6 +41,7 @@ void * thread_func(void *arg)
         r = strftime(buffer, BUF_SIZE, "%Y.%m.%d %H:%M:%S", loctime);
 
         r = write(fifod, buffer, r);
+        printf("write: %s\n", buffer);
         if (r == -1)
         {
             perror("lab7_1 write error");
@@ -47,7 +55,6 @@ void * thread_func(void *arg)
 void * thread_open(void *arg)
 {
     targs *args = (targs *) arg;
-    char fifo_name[] = "/tmp/lab7_fifo";
     int r;
 
     while(args->flag == 0)
@@ -60,12 +67,12 @@ void * thread_open(void *arg)
         }
         else
         {
-            r = pthread_create(&th_func, NULL, thread_func, &arg);
+            r = pthread_create(&th_func, NULL, thread_func, arg);
             if (r != 0)
             {
                 printf("lab7_1 pthread_create error: %s", strerror(r));
                 printf("\n");
-                pthread_exit((void *)1);
+                pthread_exit((void *)3);
             }
             pthread_exit((void *)0);
         }
@@ -79,7 +86,8 @@ int main()
     arg.flag = 0;
     int r;
     int exitcode;
-    char fifo_name[] = "/tmp/lab7_fifo";
+
+    signal(SIGPIPE, sig_handler);
 
     r = mkfifo(fifo_name, 0644);
     if (r == -1)
@@ -122,14 +130,14 @@ int main()
     if (r == -1)
     {
         perror("lab7_1 close error");
-        return 13;
+        return 1;
     }
 
     unlink(fifo_name);
     if (r == -1)
     {
         perror("lab7_1 unlink error");
-        return 14;
+        return 2;
     }
     
     return 0;

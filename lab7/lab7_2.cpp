@@ -14,6 +14,7 @@ struct targs
 };
 
 int fifod;
+char fifo_name[] = "/tmp/lab7_fifo";
 
 void * thread_func(void *arg)
 {
@@ -30,9 +31,14 @@ void * thread_func(void *arg)
             perror("lab7_2 read error");
             sleep(1);
         }
+        else if (r == 0)
+        {
+            printf("EOF, writing program is closed\n");
+            sleep(1);
+        }
         else
         {
-            printf("%s\n", buffer);
+            printf("read: %s\n", buffer);
         }
     }
     pthread_exit((void *)0);
@@ -45,15 +51,12 @@ int main()
     pthread_t th_func;
     int r;
     int exitcode;
-    char fifo_name[] = "/tmp/lab7_fifo";
 
     r = mkfifo(fifo_name, 0644);
     if (r == -1)
     {
         perror("lab7_2 mkfifo error");
     }
-
-    // printf("tut\n");
 
     fifod = open(fifo_name, O_RDONLY | O_NONBLOCK);
     if (fifod == -1)
@@ -85,14 +88,14 @@ int main()
     if (r == -1)
     {
         perror("lab7_2 close error");
-        return 13;
+        return 1;
     }
 
     unlink(fifo_name);
     if (r == -1)
     {
         perror("lab7_2 unlink error");
-        return 14;
+        return 2;
     }
     
     return 0;
