@@ -61,7 +61,7 @@ int main()
     fifod = open(fifo_name, O_RDONLY | O_NONBLOCK);
     if (fifod == -1)
     {
-        perror("lab7_1 open error");
+        perror("lab7_2 open error");
     }
 
     r = pthread_create(&th_func, NULL, thread_func, &arg);
@@ -81,8 +81,10 @@ int main()
         printf("lab7_2 pthread_join error: %s", strerror(r));
         printf("\n");
     }
-
-    printf("lab7_2 exitcode from thread_func: %d\n", exitcode);
+    else
+    {
+        printf("lab7_2 exitcode from thread_func: %d\n", exitcode);
+    }
 
     close(fifod);
     if (r == -1)

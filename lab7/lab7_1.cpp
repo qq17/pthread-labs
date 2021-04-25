@@ -112,8 +112,10 @@ int main()
         printf("lab7_1 pthread_join error: %s", strerror(r));
         printf("\n");
     }
-
-    printf("lab7_1 exitcode from thread_open: %d\n", exitcode);
+    else
+    {
+        printf("lab7_1 exitcode from thread_open: %d\n", exitcode);
+    }
 
     r = pthread_join(th_func, (void **)&exitcode);
     if (r != 0)
