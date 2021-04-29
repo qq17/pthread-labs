@@ -48,7 +48,12 @@ int main()
     int exitcode;
     mq_attr attr;
 
-    mq = mq_open(mq_name, O_CREAT | O_RDONLY | O_NONBLOCK, 0644, NULL);
+    attr.mq_flags = O_NONBLOCK;
+    attr.mq_maxmsg = 15;
+    attr.mq_msgsize = 60;
+    attr.mq_curmsgs = 0;
+
+    mq = mq_open(mq_name, O_CREAT | O_RDONLY | O_NONBLOCK, 0644, &attr);
     if (mq == (mqd_t)-1)
     {
         perror("lab8_2 mq_open error");
@@ -62,7 +67,7 @@ int main()
     printf("%ld\n", attr.mq_maxmsg);
     printf("%ld\n", attr.mq_msgsize);
 
-    attr.mq_msgsize = 60;
+    attr.mq_msgsize = 80;
     printf("%ld\n", attr.mq_maxmsg);
     printf("%ld\n", attr.mq_msgsize);
 
