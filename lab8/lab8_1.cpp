@@ -66,7 +66,7 @@ int main()
     attr.mq_msgsize = 60;
     attr.mq_curmsgs = 0;
 
-    mq = mq_open(mq_name, O_CREAT | O_WRONLY | O_NONBLOCK, 0644, &attr);
+    mq = mq_open(mq_name, O_CREAT | O_WRONLY, 0644, &attr);
     if (mq == (mqd_t)-1)
     {
         perror("lab8_1 mq_open error");
@@ -77,26 +77,10 @@ int main()
     {
         perror("lab8_2 mq_getattr error");
     }
-    printf("%ld\n", attr.mq_maxmsg);
-    printf("%ld\n", attr.mq_msgsize);
-
-    attr.mq_msgsize = 80;
-    printf("%ld\n", attr.mq_maxmsg);
-    printf("%ld\n", attr.mq_msgsize);
-
-    r = mq_setattr(mq, &attr, NULL);
-    if (r == -1)
-    {
-        perror("lab8_2 mq_getattr error");
-    }
-
-    r = mq_getattr(mq, &attr);
-    if (r == -1)
-    {
-        perror("lab8_2 mq_getattr error");
-    }
-    printf("%ld\n", attr.mq_maxmsg);
-    printf("%ld\n", attr.mq_msgsize);
+    printf("flags: %ld\n", attr.mq_flags);
+    printf("maxmsg: %ld\n", attr.mq_maxmsg);
+    printf("msgsize: %ld\n", attr.mq_msgsize);
+    printf("curmsgs: %ld\n", attr.mq_curmsgs);
 
     r = pthread_create(&th_func, NULL, thread_func, &arg);
     if (r != 0)
