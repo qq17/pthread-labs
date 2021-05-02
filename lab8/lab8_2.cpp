@@ -46,14 +46,40 @@ int main()
     pthread_t th_func;
     int r;
     int exitcode;
-    mq_attr attr;
+    struct mq_attr attr;
+    char read_buffer[256];
+
+    FILE * fp = fopen("/proc/sys/fs/mqueue/msg_default", "r");
+    if (fp == NULL)
+    {
+        perror("lab8_1 fopen error");
+    }
+
+    fread(read_buffer, sizeof(char), 256, fp);
+
+    printf("msg_default: %s\n", read_buffer);
+
+    fclose(fp);
+
+
+    fp = fopen("/proc/sys/fs/mqueue/msgsize_default", "r");
+    if (fp == NULL)
+    {
+        perror("lab8_1 fopen error");
+    }
+
+    fread(read_buffer, sizeof(char), 256, fp);
+
+    printf("msgsize_default: %s\n", read_buffer);
+
+    fclose(fp);
 
     attr.mq_flags = O_NONBLOCK;
     attr.mq_maxmsg = 15;
     attr.mq_msgsize = 60;
     attr.mq_curmsgs = 0;
 
-    mq = mq_open(mq_name, O_CREAT | O_RDONLY, 0644, &attr);
+    mq = mq_open(mq_name, O_CREAT | O_RDONLY | O_NONBLOCK, 0644, &attr);
     if (mq == (mqd_t)-1)
     {
         perror("lab8_2 mq_open error");
