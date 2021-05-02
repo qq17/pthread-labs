@@ -52,26 +52,21 @@ int main()
     FILE * fp = fopen("/proc/sys/fs/mqueue/msg_default", "r");
     if (fp == NULL)
     {
-        perror("lab8_1 fopen error");
+        perror("lab8_2 fopen error");
     }
-
     fread(read_buffer, sizeof(char), 256, fp);
-
     printf("msg_default: %s\n", read_buffer);
-
     fclose(fp);
 
+    memset(read_buffer, '\0', 256);
 
     fp = fopen("/proc/sys/fs/mqueue/msgsize_default", "r");
     if (fp == NULL)
     {
-        perror("lab8_1 fopen error");
+        perror("lab8_2 fopen error");
     }
-
     fread(read_buffer, sizeof(char), 256, fp);
-
     printf("msgsize_default: %s\n", read_buffer);
-
     fclose(fp);
 
     attr.mq_flags = O_NONBLOCK;
@@ -120,14 +115,14 @@ int main()
     mq_close(mq);
     if (r == -1)
     {
-        perror("lab8_2 close error");
+        perror("lab8_2 mq_close error");
         return 1;
     }
 
     mq_unlink(mq_name);
     if (r == -1)
     {
-        perror("lab8_2 unlink error");
+        perror("lab8_2 mq_unlink error");
         return 2;
     }
     

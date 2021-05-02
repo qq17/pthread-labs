@@ -60,24 +60,19 @@ int main()
     {
         perror("lab8_1 fopen error");
     }
-
     fread(read_buffer, sizeof(char), 256, fp);
-
     printf("msg_default: %s\n", read_buffer);
-
     fclose(fp);
 
+    memset(read_buffer, '\0', 256);
 
     fp = fopen("/proc/sys/fs/mqueue/msgsize_default", "r");
     if (fp == NULL)
     {
         perror("lab8_1 fopen error");
     }
-
     fread(read_buffer, sizeof(char), 256, fp);
-
     printf("msgsize_default: %s\n", read_buffer);
-
     fclose(fp);
 
     attr.mq_flags = O_NONBLOCK;
@@ -94,7 +89,7 @@ int main()
     r = mq_getattr(mq, &attr);
     if (r == -1)
     {
-        perror("lab8_2 mq_getattr error");
+        perror("lab8_1 mq_getattr error");
     }
     printf("flags: %ld\n", attr.mq_flags);
     printf("maxmsg: %ld\n", attr.mq_maxmsg);
@@ -126,14 +121,14 @@ int main()
     mq_close(mq);
     if (r == -1)
     {
-        perror("lab8_1 close error");
+        perror("lab8_1 mq_close error");
         return 1;
     }
 
     mq_unlink(mq_name);
     if (r == -1)
     {
-        perror("lab8_1 unlink error");
+        perror("lab8_1 mq_unlink error");
         return 2;
     }
     
